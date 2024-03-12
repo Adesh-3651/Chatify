@@ -12,17 +12,30 @@ import React from "react";
 import { useState } from "react";
 import { VisuallyHiddenInput } from "../components/styles/StyledComponents";
 import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
-import useInputValidation from '6pp'
+import { useFileHandler, useInputValidation, useStrongPassword } from '6pp';
+import { usernameValidator } from "../utils/validators";
+
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const toggleLogin = () => {
     setIsLogin(!isLogin);
   };
 
-  const name=useInputValidation("");
-  const Bio=useInputValidation("");
-  const username =useInputValidation("");
-  const Password=useInputValidation("");
+  const name = useInputValidation("");
+  const Bio = useInputValidation("");
+  const username = useInputValidation("", usernameValidator);
+  const Password = useInputValidation("");
+
+  const avatar = useFileHandler("single")
+  const handleLogin=(e)=>{
+    e.preventDefault();
+
+  }
+
+  const handleSignUp=(e)=>{
+    e.preventDefault();
+
+  }
 
   return (
     <Container
@@ -52,6 +65,7 @@ const Login = () => {
                 maxWidth: "100%",
                 marginTop: "1rem",
               }}
+              onSubmit={handleLogin}
             >
               <TextField
                 required
@@ -96,6 +110,7 @@ const Login = () => {
                 maxWidth: "100%",
                 marginTop: "1rem",
               }}
+              onSubmit={handleSignUp}
             >
               <Stack position={"relative"} width={"10rem"} margin={"auto"}>
                 <Avatar
@@ -104,7 +119,17 @@ const Login = () => {
                     height: "10rem",
                     objectFit: "contain",
                   }}
+                  src={avatar.preview}
                 ></Avatar>
+                {
+                  username.error && (
+                    <Typography color="error" variant="caption">
+                      {username.error}
+                    </Typography>
+                  )
+
+
+                }
                 <IconButton
                   sx={{
                     position: "absolute",
@@ -117,6 +142,7 @@ const Login = () => {
                         type="file"
                         accept="image/*"
                         id="icon-button-file"
+                        onChange={avatar.changeHandler}
                       />
                     </label>
                   </>
@@ -152,6 +178,15 @@ const Login = () => {
                 value={username.value}
                 onChange={username.changeHandler}
               />
+              {
+                username.error && (
+                  <Typography color="error" variant="caption">
+                    {username.error}
+                  </Typography>
+                )
+
+
+              }
               <TextField
                 required
                 fullWidth
@@ -162,6 +197,14 @@ const Login = () => {
                 value={Password.value}
                 onChange={Password.changeHandler}
               />
+
+              {
+                Password.error && (
+                  <Typography color="error" variant="caption">
+                    {Password.error}
+                  </Typography>
+                )
+              }
               <Button
                 fullWidth
                 variant="contained"
