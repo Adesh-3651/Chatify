@@ -1,58 +1,76 @@
 import {
   AppBar,
   Backdrop,
+  Badge,
   Box,
   IconButton,
   Toolbar,
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { Suspense, useState,lazy} from "react";
-import { black, orange, white } from "../constants/color";
-import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from "@mui/icons-material/Add";
-import { Group as GroupIcon,  } from "@mui/icons-material";
-import { Logout as LogoutIcon } from "@mui/icons-material";
-import { Notifications as NotificationIcon } from "@mui/icons-material";
+import React, { Suspense, lazy, useState } from "react";
+import { orange } from "../../constants/color";
+import {
+  Add as AddIcon,
+  Menu as MenuIcon,
+  Search as SearchIcon,
+  Group as GroupIcon,
+  Logout as LogoutIcon,
+  Notifications as NotificationsIcon,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { server } from "../../constants/config";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { userNotExists } from "../../redux/reducers/auth";
+import {
+  setIsMobile,
+  setIsNewGroup,
+  setIsNotification,
+  setIsSearch,
+} from "../../redux/reducers/misc";
+import { resetNotificationCount } from "../../redux/reducers/chat";
 
-
-
-
-
-
-
-
-
+const SearchDialog = lazy(() => import("../specific/Search"));
+const NotifcationDialog = lazy(() => import("../specific/Notifications"));
+const NewGroupDialog = lazy(() => import("../specific/NewGroup"));
 
 const Header = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isSearch, setIsSearch] = useState(false);
-  const [isNewGroups, setIsNewGroups] = useState(false);
-  const [isNotifications, setIsNotifications] = useState(false);
-
   const navigate = useNavigate();
-  
-  const handleMobile = () => {
-    setIsMobile((prev) => !prev);
-  };
-  const openSearchDialog = () => {
-    setIsSearch((prev) => !prev);
-  };
+  const dispatch = useDispatch();
+
+  const { isSearch, isNotification, isNewGroup } = useSelector(
+    (state) => state.misc
+  );
+  const { notificationCount } = useSelector((state) => state.chat);
+
+  const handleMobile = () => dispatch(setIsMobile(true));
+
+  const openSearch = () => dispatch(setIsSearch(true));
+
   const openNewGroup = () => {
-    setIsNewGroups((prev) => !prev);
+    dispatch(setIsNewGroup(true));
   };
 
   const openNotification = () => {
-    setIsNotifications((prev) => !prev);
+    dispatch(setIsNotification(true));
+    dispatch(resetNotificationCount());
   };
-  const navigateToGroups = () => navigate("/groups");
-  const logoutHandler = () => {};
 
-const SearchDialog = lazy(() => import("../specific/Search"));
-const NotificationDialog = lazy(() => import("../specific/Notification"));
-const NewGroupsDialog = lazy(() => import("../dialog/NewGroups"));
+  const navigateToGroup = () => navigate("/groups");
+
+  const logoutHandler = async () => {
+    try {
+      const { data } = await axios.get(`${server}/api/v1/user/logout`, {
+        withCredentials: true,
+      });
+      dispatch(userNotExists());
+      toast.success(data.message);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    }
+  };
 
   return (
     <>
@@ -60,40 +78,28 @@ const NewGroupsDialog = lazy(() => import("../dialog/NewGroups"));
         <AppBar
           position="static"
           sx={{
-            bgcolor: black,
+            bgcolor: orange,
           }}
         >
           <Toolbar>
             <Typography
               variant="h6"
               sx={{
-                display: {
-                  xs: "none",
-                  sm: "block",
-                },
+                display: { xs: "none", sm: "block" },
               }}
             >
-              Chat App
+              Chattu
             </Typography>
+
             <Box
               sx={{
-                display: {
-                  xs: "block",
-                  sm: "none",
-                },
+                display: { xs: "block", sm: "none" },
               }}
             >
-              <Tooltip title="Menu">
-                <IconButton color="inherit " onClick={handleMobile}>
-                  <MenuIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                </IconButton>
-              </Tooltip>
+              <IconButton color="inherit" onClick={handleMobile}>
+                <MenuIcon />
+              </IconButton>
             </Box>
-
             <Box
               sx={{
                 flexGrow: 1,
@@ -101,93 +107,72 @@ const NewGroupsDialog = lazy(() => import("../dialog/NewGroups"));
             />
             <Box>
               <IconBtn
-                icon={
-                  <SearchIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                }
-                title="Search"
-                onClick={openSearchDialog}
+                title={"Search"}
+                icon={<SearchIcon />}
+                onClick={openSearch}
               />
+
               <IconBtn
-                icon={
-                  <AddIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                }
-                title="Create Group"
+                title={"New Group"}
+                icon={<AddIcon />}
                 onClick={openNewGroup}
               />
 
               <IconBtn
-                icon={
-                  <GroupIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                }
-                title="Groups"
-                onClick={navigateToGroups}
+                title={"Manage Groups"}
+                icon={<GroupIcon />}
+                onClick={navigateToGroup}
               />
 
               <IconBtn
-                icon={
-                  <NotificationIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                }
-                title="Notification Group"
+                title={"Notifications"}
+                icon={<NotificationsIcon />}
                 onClick={openNotification}
+                value={notificationCount}
               />
 
               <IconBtn
-                icon={
-                  <LogoutIcon
-                    sx={{
-                      color: white,
-                    }}
-                  />
-                }
-                title="Logout"
+                title={"Logout"}
+                icon={<LogoutIcon />}
                 onClick={logoutHandler}
               />
             </Box>
           </Toolbar>
         </AppBar>
       </Box>
-      {
-        isSearch && <Suspense fallback={<Backdrop open/>}>
-          <SearchDialog open={isSearch} onClose={openSearchDialog} />
-        </Suspense>
-      }
 
-{
-        isNotifications && <Suspense fallback={<Backdrop open/>}>
-          <NotificationDialog open={isSearch} onClose={openSearchDialog} />
+      {isSearch && (
+        <Suspense fallback={<Backdrop open />}>
+          <SearchDialog />
         </Suspense>
-      }
+      )}
 
-{
-        isNewGroups && <Suspense fallback={<Backdrop open/>}>
-          <NewGroupsDialog open={isSearch} onClose={openSearchDialog} />
+      {isNotification && (
+        <Suspense fallback={<Backdrop open />}>
+          <NotifcationDialog />
         </Suspense>
-      }
+      )}
+
+      {isNewGroup && (
+        <Suspense fallback={<Backdrop open />}>
+          <NewGroupDialog />
+        </Suspense>
+      )}
     </>
   );
 };
 
-const IconBtn = ({ icon, title, onClick }) => {
+const IconBtn = ({ title, icon, onClick, value }) => {
   return (
     <Tooltip title={title}>
-      <IconButton color="inherit " size="large" onClick={onClick}>
-        {icon}
+      <IconButton color="inherit" size="large" onClick={onClick}>
+        {value ? (
+          <Badge badgeContent={value} color="error">
+            {icon}
+          </Badge>
+        ) : (
+          icon
+        )}
       </IconButton>
     </Tooltip>
   );
